@@ -1,6 +1,5 @@
 import asyncio
 import logging.config
-import os
 
 from aiogram import Bot, Dispatcher
 from aiogram.exceptions import TelegramRetryAfter
@@ -9,6 +8,7 @@ from aiogram.handlers import MessageHandler
 
 from config import settings
 from database import core as database
+from database.models import User
 
 logging.config.dictConfig(settings.LOGGING_CONFIG)
 logger = logging.getLogger(__name__)
@@ -21,13 +21,21 @@ class StartCommandHandler(MessageHandler):
     """Handler of the start command."""
 
     async def handle(self):
+        await User(
+            tg_id=self.from_user.id,
+            first_name=self.from_user.first_name,
+            last_name=self.from_user.last_name,
+            username=self.from_user.username,
+            language_code=self.from_user.language_code
+        ).insert_or_update()
+
         await self.event.answer("Start")
 
 
 async def main():
     await database.init()
 
-    bot = Bot(token=os.environ["TOKEN"])
+    bot = Bot(token=settings.TOKEN)
 
     try:
         await dispatcher.start_polling(bot)

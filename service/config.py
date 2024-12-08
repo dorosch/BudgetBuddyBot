@@ -2,7 +2,9 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    MONGODB_URI: str = "mongodb://user:password@mongo:27017/app"
+    TOKEN: str = "FAKE_TOKEN"
+
+    MONGODB_URI: str = "mongodb://user:password@0.0.0.0:27017/app"
 
     LOGGING_CONFIG: dict = {
         "version": 1,
