@@ -15,3 +15,6 @@ venv.bak/
 # IDE
 .idea/
 .vscode/
+
+# Custom
+service/documents/

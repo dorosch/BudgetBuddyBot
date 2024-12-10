@@ -1,10 +1,8 @@
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import Optional, Self
 
-from beanie import Document, Link, TimeSeriesConfig, Granularity
-
-from database.models import User
+from beanie import Document, TimeSeriesConfig, Granularity
 
 
 class Transaction(Document):
@@ -13,11 +11,32 @@ class Transaction(Document):
         credit = "C"
         unknown = "Unk"
 
+        @classmethod
+        def parse(cls, value: str) -> Self:
+            match value.upper():
+                case "D":
+                    return cls.debit
+                case "C" | "K":
+                    return cls.credit
+                case _:
+                    return cls.unknown
+
     class Currency(Enum):
         usd = "USD"
         eur = "EUR"
 
-    user: Link[User]
+        @classmethod
+        def parse(cls, value: str) -> Self:
+            match value.upper():
+                case "USD":
+                    return cls.usd
+                case "EUR":
+                    return cls.eur
+                case _:
+                    raise ValueError(f"Unknown currency {value}")
+
+    tg_id: int
+    bank: str
     timestamp: datetime
     amount: float
     type: Type
@@ -32,8 +51,3 @@ class Transaction(Document):
             meta_field="category",
             granularity=Granularity.hours,
         )
-
-    class Config:
-        indexes = [
-            {"fields": ["user", "timestamp", "amount"], "unique": True}
-        ]

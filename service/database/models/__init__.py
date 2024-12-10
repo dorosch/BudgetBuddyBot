@@ -1,8 +1,8 @@
-__all__ = ("User", "MODELS")
+__all__ = ("MODELS", "Invite", "Transaction", "User")
 
+from .invite import Invite
+from .transaction import Transaction
 from .user import User
 
 
-MODELS = (
-    User,
-)
+MODELS = (Invite, Transaction, User)

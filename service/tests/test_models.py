@@ -12,7 +12,9 @@ class TestUserModel:
 
         await user.insert_or_update()
 
-        assert await User.find(
-            User.tg_id == user.tg_id,
-            User.username == updated_username
-        ).first_or_none() is not None
+        assert (
+            await User.find(
+                User.tg_id == user.tg_id, User.username == updated_username
+            ).first_or_none()
+            is not None
+        )
