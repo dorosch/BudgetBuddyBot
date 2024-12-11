@@ -1,7 +1,28 @@
+from typing import Optional
+
 import factory
+from dataclasses import dataclass, field
 
 from database.models import Invite, User
 from bank_providers import swedbank, revolut
+
+
+@dataclass
+class TelegramUser:
+    id: int
+    first_name: str
+    last_name: Optional[str] = None
+    username: Optional[str] = None
+    language_code: Optional[str] = None
+
+
+@dataclass
+class Message:
+    from_user: TelegramUser
+    answers: list[str] = field(default_factory=list)
+
+    async def answer(self, text: str, *args, **kwargs):
+        self.answers.append(text)
 
 
 class InviteFactory(factory.Factory):
@@ -21,6 +42,24 @@ class UserFactory(factory.Factory):
     last_name = factory.Faker("last_name")
     username = factory.Faker("pystr")
     language_code = factory.Faker("locale")
+
+
+class TelegramUserFactory(factory.Factory):
+    class Meta:
+        model = TelegramUser
+
+    id = factory.Faker("pyint")
+    first_name = factory.Faker("first_name")
+    last_name = factory.Faker("last_name")
+    username = factory.Faker("pystr")
+    language_code = factory.Faker("locale")
+
+
+class MessageFactory(factory.Factory):
+    class Meta:
+        model = Message
+
+    from_user = factory.SubFactory(TelegramUserFactory)
 
 
 class RevolutTransactionDataFactory(factory.Factory):

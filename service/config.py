@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    TOKEN: str = "FAKE_TOKEN"
+    TOKEN: str = "FAKE"
 
     MONGODB_URI: str = "mongodb://user:password@0.0.0.0:27017/app"
 

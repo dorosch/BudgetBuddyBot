@@ -11,7 +11,7 @@ from handlers import (
     help as help_handler,
     invitation as invitation_helper,
     start as start_handler,
-    upload as upload_handler
+    upload as upload_handler,
 )
 from config import settings
 from database import core as database
@@ -26,7 +26,9 @@ async def main():
     bot = Bot(token=settings.TOKEN)
 
     dispatcher = Dispatcher(
-        storage=MongoStorage(AsyncIOMotorClient(settings.MONGODB_URI, authSource="admin"))
+        storage=MongoStorage(
+            AsyncIOMotorClient(settings.MONGODB_URI, authSource="admin")
+        )
     )
 
     dispatcher.include_router(help_handler.router)
@@ -34,13 +36,16 @@ async def main():
     dispatcher.include_router(start_handler.router)
     dispatcher.include_router(upload_handler.router)
 
-    await bot.set_my_commands([
-        BotCommand(command="/help", description="Information about the bot"),
-        BotCommand(command="/upload", description="Upload your account statement"),
-        BotCommand(
-            command="/create_invitation", description="Invite someone to share a budget"
-        ),
-    ])
+    await bot.set_my_commands(
+        [
+            BotCommand(command="/help", description="Information about the bot"),
+            BotCommand(command="/upload", description="Upload your account statement"),
+            BotCommand(
+                command="/create_invitation",
+                description="Invite someone to share a budget",
+            ),
+        ]
+    )
 
     try:
         await dispatcher.start_polling(bot)
