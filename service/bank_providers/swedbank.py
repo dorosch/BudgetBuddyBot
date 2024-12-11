@@ -90,7 +90,7 @@ class Swedbank(BankProvider):
                 currency=Transaction.Currency.parse(data.currency),
                 category=None,
                 account_number=data.account_number,
-                description=data.description,
+                description=data.description.strip(),
             )
         except Exception as error:
             logger.error("csv parse error", exc_info=error)

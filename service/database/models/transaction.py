@@ -24,7 +24,7 @@ class Transaction(Document):
 
         @classmethod
         def parse(cls, value: str) -> Self:
-            match value.upper():
+            match value.strip().upper():
                 case "D":
                     return cls.debit
                 case "C" | "K":
@@ -41,7 +41,7 @@ class Transaction(Document):
 
         @classmethod
         def parse(cls, value: str) -> Self:
-            match value.upper():
+            match value.strip().upper():
                 case "USD":
                     return cls.usd
                 case "EUR":
