@@ -51,9 +51,7 @@ class UploadHandler(MessageHandler):
         await self.data["state"].set_state(UploadBankStatement.selected_bank)
 
 
-@router.message(
-    UploadBankStatement.selected_bank, F.text.in_(BANK_PROVIDERS.keys())
-)
+@router.message(UploadBankStatement.selected_bank, F.text.in_(BANK_PROVIDERS.keys()))
 class SelectBankHandler(MessageHandler):
     async def handle(self):
         bank = self.event.text

@@ -1,3 +1,5 @@
+from typing import Collection
+
 from aiogram import Router
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
@@ -19,23 +21,23 @@ class HelpCommandHandler(MessageHandler):
             "🔹 /help \\- see the current message with command hints\n"
             "\n"
             "🔹 /upload \\- Upload your bank statement to start tracking your expenses and incomes\\. "
-            f"{self._get_supported_banks()}"
+            f"{self._get_supported_banks(BANK_PROVIDERS.keys())}"
             "\n"
             "🔹 /create_invitation \\ - Invite another person to manage a joint budget",
             parse_mode=ParseMode.MARKDOWN_V2,
         )
 
     @staticmethod
-    def _get_supported_banks() -> str:
-        match len(BANK_PROVIDERS):
+    def _get_supported_banks(providers: Collection[str]) -> str:
+        match len(providers):
             case 0:
                 return "We do not support any banks yet\\."
             case 1:
-                bank, *_ = BANK_PROVIDERS.keys()
+                bank, *_ = providers
                 return f"We support {bank}\\."
             case 2:
-                bank_a, bank_b = BANK_PROVIDERS.keys()
+                bank_a, bank_b = providers
                 return f"We support {bank_a} and {bank_b}\\."
             case _:
-                others, bank = BANK_PROVIDERS.keys()
+                *others, bank = providers
                 return f"We support {', '.join(others)} and {bank}\\."
