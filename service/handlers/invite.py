@@ -9,7 +9,7 @@ from database.models import Invite
 router = Router()
 
 
-@router.message(Command("create_invitation"))
+@router.message(Command("invite"))
 class InvitationCommandHandler(MessageHandler):
     """Handler of the invitation command."""
 
