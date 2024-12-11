@@ -26,7 +26,7 @@ class Invite(Document):
         if invite := await Invite.find(Invite.tg_id == self.tg_id).first_or_none():
             return invite.code
 
-        while code := "".join(choices(ascii_lowercase + digits, k=randint(8, 12))):
+        while code := self.generate_code():
             invite = Invite(tg_id=self.tg_id, code=code)
 
             try:
@@ -35,3 +35,7 @@ class Invite(Document):
                 continue
             else:
                 return invite.code
+
+    @staticmethod
+    def generate_code() -> str:
+        return "".join(choices(ascii_lowercase + digits, k=randint(8, 12)))

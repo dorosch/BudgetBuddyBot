@@ -1,6 +1,8 @@
 import logging
 import math
-from typing import Iterator
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Iterator, Optional
 
 import openpyxl
 
@@ -9,6 +11,16 @@ from .base import BankProvider
 from .errors import UnsupportedFileType
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class TransactionData:
+    user_id: int
+    name: str
+    timestamp: datetime
+    amount: float
+    currency: str
+    description: str
 
 
 class Revolut(BankProvider):
@@ -29,21 +41,35 @@ class Revolut(BankProvider):
         for row in rows:
             data = dict(zip(headers, (cell.value for cell in row)))
 
-            try:
-                yield Transaction(
-                    tg_id=self.user_id,
-                    bank=self.name,
+            if transaction := self._build_transaction_instance(
+                TransactionData(
+                    user_id=self.user_id,
+                    name=self.name,
                     timestamp=data["Started Date"],
-                    amount=math.fabs(data["Amount"]),
-                    type=(
-                        Transaction.Type.debit
-                        if data["Amount"] > 0
-                        else Transaction.Type.credit
-                    ),
-                    currency=Transaction.Currency.parse(data["Currency"]),
-                    category=None,
-                    account_number=None,
+                    amount=data["Amount"],
+                    currency=data["Currency"],
                     description=data["Description"],
                 )
-            except Exception as error:
-                logger.error("csv parse error", exc_info=error)
+            ):
+                yield transaction
+
+    @staticmethod
+    def _build_transaction_instance(data: TransactionData) -> Optional[Transaction]:
+        try:
+            return Transaction(
+                tg_id=data.user_id,
+                bank=data.name,
+                timestamp=data.timestamp,
+                amount=math.fabs(data.amount),
+                type=(
+                    Transaction.Type.debit
+                    if data.amount > 0
+                    else Transaction.Type.credit
+                ),
+                currency=Transaction.Currency.parse(data.currency),
+                category=None,
+                account_number=None,
+                description=data.description,
+            )
+        except Exception as error:
+            logger.error("csv parse error", exc_info=error)

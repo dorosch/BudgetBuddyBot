@@ -1,12 +1,25 @@
 import logging
 from datetime import datetime
-from typing import Iterator
+from typing import Iterator, Optional
+from dataclasses import dataclass
 
 from .base import BankProvider
 from .errors import UnsupportedFileType
 from database.models.transaction import Transaction
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class TransactionData:
+    user_id: int
+    name: str
+    timestamp: str
+    amount: str
+    type: str
+    currency: str
+    account_number: str
+    description: str
 
 
 class Swedbank(BankProvider):
@@ -51,17 +64,33 @@ class Swedbank(BankProvider):
                 if code != "20":
                     continue
 
-                try:
-                    yield Transaction(
-                        tg_id=self.user_id,
-                        bank=self.name,
-                        timestamp=datetime.strptime(date, "%Y-%m-%d"),
-                        amount=float(amount),
-                        type=Transaction.Type.parse(operation_type),
-                        currency=Transaction.Currency.parse(currency),
-                        category=None,
+                if transaction := self._build_transaction_instance(
+                    TransactionData(
+                        user_id=self.user_id,
+                        name=self.name,
+                        timestamp=date,
+                        amount=amount,
+                        type=operation_type,
+                        currency=currency,
                         account_number=account_number,
                         description=description,
                     )
-                except Exception as error:
-                    logger.error("csv parse error", exc_info=error)
+                ):
+                    yield transaction
+
+    @staticmethod
+    def _build_transaction_instance(data: TransactionData) -> Optional[Transaction]:
+        try:
+            return Transaction(
+                tg_id=data.user_id,
+                bank=data.name,
+                timestamp=datetime.strptime(data.timestamp, "%Y-%m-%d"),
+                amount=float(data.amount),
+                type=Transaction.Type.parse(data.type),
+                currency=Transaction.Currency.parse(data.currency),
+                category=None,
+                account_number=data.account_number,
+                description=data.description,
+            )
+        except Exception as error:
+            logger.error("csv parse error", exc_info=error)
