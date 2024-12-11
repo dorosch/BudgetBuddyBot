@@ -8,8 +8,9 @@ from aiogram.types import BotCommand
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from handlers import (
+    analytics as analytics_handler,
     help as help_handler,
-    invitation as invitation_helper,
+    invite as invitation_helper,
     start as start_handler,
     upload as upload_handler,
 )
@@ -26,11 +27,13 @@ async def main():
     bot = Bot(token=settings.TOKEN)
 
     dispatcher = Dispatcher(
+        bot=bot,
         storage=MongoStorage(
             AsyncIOMotorClient(settings.MONGODB_URI, authSource="admin")
-        )
+        ),
     )
 
+    dispatcher.include_router(analytics_handler.router)
     dispatcher.include_router(help_handler.router)
     dispatcher.include_router(invitation_helper.router)
     dispatcher.include_router(start_handler.router)
@@ -39,9 +42,13 @@ async def main():
     await bot.set_my_commands(
         [
             BotCommand(command="/help", description="Information about the bot"),
+            BotCommand(
+                command="/analytics",
+                description="Analytics of your income and expenses this month",
+            ),
             BotCommand(command="/upload", description="Upload your account statement"),
             BotCommand(
-                command="/create_invitation",
+                command="/invite",
                 description="Invite someone to share a budget",
             ),
         ]
