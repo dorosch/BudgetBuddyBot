@@ -13,6 +13,6 @@ register(UserFactory)
 
 @pytest_asyncio.fixture(scope="function", autouse=True)
 async def init():
-    settings.MONGODB_URI = re.sub("/\w*$", "/tests", settings.MONGODB_URI)
+    settings.MONGODB_URI = re.sub(r"/\w*$", "/tests", settings.MONGODB_URI)
 
     await database_init()

@@ -1,0 +1,43 @@
+name: Tests
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    services:
+      mongo:
+        image: mongo:8.0.3
+        env:
+          MONGO_INITDB_ROOT_USERNAME: user
+          MONGO_INITDB_ROOT_PASSWORD: password
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd mongo
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.12'
+
+      - name: Install poetry
+        uses: abatilo/actions-poetry@v2
+
+      - name: Install the project dependencies
+        run: |
+          poetry config virtualenvs.create false
+          poetry install --with dev --extras bot
+
+      - name: Run the automated tests
+        run: poetry run pytest -v
