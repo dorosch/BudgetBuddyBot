@@ -1,0 +1,23 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: Build containers
+        run: |
+          docker compose build
+
+      - name: Start containers
+        env:
+          TOKEN: ${{ secrets.TOKEN }}
+        run: |
+          TOKEN="$TOKEN" docker compose up -d
