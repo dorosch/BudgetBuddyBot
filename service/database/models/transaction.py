@@ -49,22 +49,33 @@ class Transaction(Document):
                 case _:
                     raise ValueError(f"Unknown currency {value}")
 
+    class Category(str, Enum):
+        INCOME = "Income"
+        HOUSING = "Housing"
+        TRANSPORT = "Transport"
+        CHILDREN = "Children"
+        BEAUTY = "Beauty"
+        HEALTH = "Health"
+        MISC = "Miscellaneous"
+        GAMES = "Games"
+        SHOPPING = "Shopping"
+        SERVICES = "Services"
+        EDUCATION = "Education"
+        TRAVEL = "Travel"
+        PETS = "Pets"
+        UNCATEGORIZED = "Uncategorized"
+        FOOD = "Food"
+        SPORT = "Sport"
+
     tg_id: int
     bank: str
     timestamp: datetime
     amount: float
     type: Type
     currency: Currency
-    category: Optional[str] = None
+    category: Optional[Category] = None
     account_number: Optional[str] = None
     description: Optional[str] = None
-
-    class Settings:
-        timeseries = TimeSeriesConfig(
-            time_field="timestamp",
-            meta_field="category",
-            granularity=Granularity.hours,
-        )
 
     @classmethod
     async def get_income_and_expenses(

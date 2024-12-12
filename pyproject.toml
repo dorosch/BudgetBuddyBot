@@ -20,6 +20,10 @@ pytest-factoryboy = "2.7.0"
 factory-boy = "3.3.0"
 black = "24.10.0"
 
+# classifier
+pandas = "2.2.3"
+scikit-learn = "1.6.0"
+
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "function"
 
