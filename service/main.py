@@ -8,7 +8,7 @@ from aiogram.types import BotCommand
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from handlers import (
-    analytics as analytics_handler,
+    report as report_handler,
     help as help_handler,
     invite as invitation_helper,
     start as start_handler,
@@ -33,7 +33,7 @@ async def main():
         ),
     )
 
-    dispatcher.include_router(analytics_handler.router)
+    dispatcher.include_router(report_handler.router)
     dispatcher.include_router(help_handler.router)
     dispatcher.include_router(invitation_helper.router)
     dispatcher.include_router(start_handler.router)
@@ -43,8 +43,8 @@ async def main():
         [
             BotCommand(command="/help", description="Information about the bot"),
             BotCommand(
-                command="/analytics",
-                description="Analytics of your income and expenses this month",
+                command="/report",
+                description="Report of your income and expenses",
             ),
             BotCommand(command="/upload", description="Upload your account statement"),
             BotCommand(

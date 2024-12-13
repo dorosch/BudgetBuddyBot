@@ -17,18 +17,18 @@ router = Router()
 logger = logging.getLogger(__name__)
 
 
-class AnalyticsPeriodCallback(CallbackData, prefix="analytics_period"):
+class ReportCallback(CallbackData, prefix="report"):
     from_date: str
     to_date: str
 
 
-@router.message(Command("analytics"))
-class AnalyticsCommandHandler(MessageHandler):
-    """Handler of the analytics command."""
+@router.message(Command("report"))
+class ReportCommandHandler(MessageHandler):
+    """Handler of the report command."""
 
     async def handle(self):
         await self.event.answer(
-            "Please select the period which you want 🗓",
+            "Please select the period for your report 🗓",
             reply_markup=self._get_keyboard(),
         )
 
@@ -67,21 +67,21 @@ class AnalyticsCommandHandler(MessageHandler):
                 [
                     InlineKeyboardButton(
                         text="Current month",
-                        callback_data=AnalyticsPeriodCallback(
+                        callback_data=ReportCallback(
                             from_date=current_month_start.strftime("%Y-%m-%d"),
                             to_date=current_month_end.strftime("%Y-%m-%d"),
                         ).pack(),
                     ),
                     InlineKeyboardButton(
                         text="Last 3 months",
-                        callback_data=AnalyticsPeriodCallback(
+                        callback_data=ReportCallback(
                             from_date=last_3_months_start.strftime("%Y-%m-%d"),
                             to_date=last_3_months_end.strftime("%Y-%m-%d"),
                         ).pack(),
                     ),
                     InlineKeyboardButton(
                         text="Last 6 months",
-                        callback_data=AnalyticsPeriodCallback(
+                        callback_data=ReportCallback(
                             from_date=last_6_months_start.strftime("%Y-%m-%d"),
                             to_date=last_6_months_end.strftime("%Y-%m-%d"),
                         ).pack(),
@@ -90,14 +90,14 @@ class AnalyticsCommandHandler(MessageHandler):
                 [
                     InlineKeyboardButton(
                         text="Current year",
-                        callback_data=AnalyticsPeriodCallback(
+                        callback_data=ReportCallback(
                             from_date=current_year_start.strftime("%Y-%m-%d"),
                             to_date=current_year_end.strftime("%Y-%m-%d"),
                         ).pack(),
                     ),
                     InlineKeyboardButton(
                         text="Last year",
-                        callback_data=AnalyticsPeriodCallback(
+                        callback_data=ReportCallback(
                             from_date=last_year_start.strftime("%Y-%m-%d"),
                             to_date=last_year_end.strftime("%Y-%m-%d"),
                         ).pack(),
@@ -107,12 +107,12 @@ class AnalyticsCommandHandler(MessageHandler):
         )
 
 
-@router.callback_query(AnalyticsPeriodCallback.filter())
-class AnalyticsPeriodCallbackHandler(CallbackQueryHandler):
-    """Callback for selecting a specific period for analytics."""
+@router.callback_query(ReportCallback.filter())
+class ReportCallbackHandler(CallbackQueryHandler):
+    """Callback for selecting a specific period for the report."""
 
     async def handle(self):
-        callback_data = AnalyticsPeriodCallback.unpack(self.callback_data)
+        callback_data = ReportCallback.unpack(self.callback_data)
 
         try:
             from_date = datetime.strptime(callback_data.from_date, "%Y-%m-%d")
@@ -122,21 +122,21 @@ class AnalyticsPeriodCallbackHandler(CallbackQueryHandler):
 
             return await self.event.answer("Something get wrong")
 
-        analytics = await Transaction.get_income_and_expenses(
+        report = await Transaction.get_income_and_expenses(
             self.from_user.id, from_date, to_date
         )
 
         incomes = (
             "".join(
                 f"🔹 {amount} {currency}\n"
-                for currency, amount in analytics.income.items()
+                for currency, amount in report.income.items()
             )
             or "No data available"
         )
         expenses = (
             "".join(
                 f"🔹 {amount} {currency}\n"
-                for currency, amount in analytics.expenses.items()
+                for currency, amount in report.expenses.items()
             )
             or "No data available"
         )

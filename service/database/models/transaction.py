@@ -8,7 +8,7 @@ from beanie import Document, TimeSeriesConfig, Granularity
 
 
 @dataclass
-class Analytics:
+class Report:
     income: dict["Transaction.Currency":float]
     expenses: dict["Transaction.Currency":float]
 
@@ -80,7 +80,7 @@ class Transaction(Document):
     @classmethod
     async def get_income_and_expenses(
         cls, tg_id: int, start_date: datetime, end_date: datetime
-    ) -> "Analytics":
+    ) -> "Report":
         result = await cls.aggregate(
             [
                 {
@@ -113,4 +113,4 @@ class Transaction(Document):
             elif operation == cls.Type.debit:
                 expenses[currency] += entry["total_amount"]
 
-        return Analytics(income=dict(income), expenses=dict(expenses))
+        return Report(income=dict(income), expenses=dict(expenses))
