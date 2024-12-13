@@ -2,15 +2,20 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Self
+from typing import Optional, Self, TypeAlias
 
-from beanie import Document, TimeSeriesConfig, Granularity
+from beanie import Document
+
+
+ReportEntry: TypeAlias = dict[
+    "Transaction.Currency", dict["Transaction.Category", float]
+]
 
 
 @dataclass
 class Report:
-    income: dict["Transaction.Currency":float]
-    expenses: dict["Transaction.Currency":float]
+    income: ReportEntry
+    expenses: ReportEntry
 
 
 class Transaction(Document):
@@ -41,13 +46,10 @@ class Transaction(Document):
 
         @classmethod
         def parse(cls, value: str) -> Self:
-            match value.strip().upper():
-                case "USD":
-                    return cls.usd
-                case "EUR":
-                    return cls.eur
-                case _:
-                    raise ValueError(f"Unknown currency {value}")
+            try:
+                return cls(value.upper())
+            except ValueError as error:
+                raise ValueError(f"Unknown currency {value}") from error
 
     class Category(str, Enum):
         INCOME = "Income"
@@ -63,9 +65,19 @@ class Transaction(Document):
         EDUCATION = "Education"
         TRAVEL = "Travel"
         PETS = "Pets"
-        UNCATEGORIZED = "Uncategorized"
+        UNKNOWN = "Unknown"
         FOOD = "Food"
         SPORT = "Sport"
+
+        def __str__(self) -> str:
+            return self.value
+
+        @classmethod
+        def parse(cls, value: str) -> Self:
+            try:
+                return cls(value.lower().capitalize())
+            except ValueError as error:
+                raise ValueError(f"Unknown category {value}") from error
 
     tg_id: int
     bank: str
@@ -80,37 +92,61 @@ class Transaction(Document):
     @classmethod
     async def get_income_and_expenses(
         cls, tg_id: int, start_date: datetime, end_date: datetime
-    ) -> "Report":
+    ) -> Report:
         result = await cls.aggregate(
             [
                 {
                     "$match": {
                         "tg_id": tg_id,
-                        "timestamp": {
-                            "$gte": start_date,
-                            "$lte": end_date,
-                        },
+                        "timestamp": {"$gte": start_date, "$lte": end_date},
+                    }
+                },
+                {
+                    "$addFields": {
+                        "category": {"$ifNull": ["$category", str(cls.Category.UNKNOWN)]}
                     }
                 },
                 {
                     "$group": {
-                        "_id": {"type": "$type", "currency": "$currency"},
+                        "_id": {
+                            "category": "$category",
+                            "type": "$type",
+                            "currency": "$currency",
+                        },
                         "total_amount": {"$sum": "$amount"},
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": {
+                            "type": "$_id.type",
+                            "currency": "$_id.currency",
+                        },
+                        "categories": {
+                            "$push": {
+                                "category": "$_id.category",
+                                "total_amount": "$total_amount",
+                            }
+                        },
                     }
                 },
             ]
         ).to_list()
 
-        income = defaultdict(float)
-        expenses = defaultdict(float)
+        income = defaultdict(lambda: defaultdict(float))
+        expenses = defaultdict(lambda: defaultdict(float))
 
-        for entry in result:
-            operation = cls.Type.parse(entry["_id"]["type"])
-            currency = cls.Currency.parse(entry["_id"]["currency"])
+        for record in result:
+            operation = cls.Type.parse(record["_id"]["type"])
+            currency = cls.Currency.parse(record["_id"]["currency"])
 
-            if operation == cls.Type.credit:
-                income[currency] += entry["total_amount"]
-            elif operation == cls.Type.debit:
-                expenses[currency] += entry["total_amount"]
+            for category_record in record["categories"]:
+                amount = category_record["total_amount"]
+                category = Transaction.Category.parse(category_record["category"])
+
+                if operation == cls.Type.credit:
+                    income[currency][category] += amount
+                elif operation == cls.Type.debit:
+                    expenses[currency][category] += amount
 
         return Report(income=dict(income), expenses=dict(expenses))

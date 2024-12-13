@@ -126,7 +126,7 @@ CATEGORY_MAPPING = {
         "mokestis",
         "72429488",
     ),
-    Transaction.Category.UNCATEGORIZED: ("mokestis: grynieji", "magernastya99"),
+    Transaction.Category.UNKNOWN: ("mokestis: grynieji", "magernastya99"),
     Transaction.Category.TRAVEL: (
         "kempingas",
         "economybookings",

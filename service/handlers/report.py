@@ -12,6 +12,7 @@ from aiogram.types import (
 )
 
 from database.models import Transaction
+from database.models.transaction import ReportEntry
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -126,33 +127,52 @@ class ReportCallbackHandler(CallbackQueryHandler):
             self.from_user.id, from_date, to_date
         )
 
-        incomes = (
-            "".join(
-                f"🔹 {amount} {currency}\n"
-                for currency, amount in report.income.items()
-            )
-            or "No data available"
-        )
-        expenses = (
-            "".join(
-                f"🔹 {amount} {currency}\n"
-                for currency, amount in report.expenses.items()
-            )
-            or "No data available"
-        )
-
         await self.bot.send_message(
             chat_id=self.event.message.chat.id,
             text=(
                 "Here is your financial report from "
                 f"_{md.quote(callback_data.from_date)}_ to _{md.quote(callback_data.to_date)}_:"
                 "\n\n"
-                "**Income**:\n"
-                f"{md.quote(incomes)}"
+                f"**Income** {md.quote(self._total_amount(report.income))}\n"
+                f"{md.quote(self._build_report(report.income))}"
                 "\n"
-                "**Expenses**:\n"
-                f"{md.quote(expenses)}"
+                f"**Expenses** {md.quote(self._total_amount(report.expenses))}\n"
+                f"{md.quote(self._build_report(report.expenses))}"
             ),
             parse_mode=ParseMode.MARKDOWN_V2,
         )
         await self.event.answer()
+
+    @staticmethod
+    def _build_report(entry: ReportEntry) -> str:
+        max_length = max(
+            len(category)
+            for currency, categories in entry.items()
+            for category, amount in categories.items()
+        )
+
+        return (
+            "".join(
+                f"🔹 {category.ljust(max_length)} : {amount:.2f} {currency}\n"
+                for currency, categories in entry.items()
+                for category, amount in categories.items()
+            )
+            or "No data available"
+        )
+
+    @staticmethod
+    def _total_amount(entry: ReportEntry) -> str:
+        results = [
+            f"{sum(categories.values()):.2f} {currency}"
+            for currency, categories in entry.items()
+        ]
+
+        match len(results):
+            case 1:
+                return results.pop()
+            case 2:
+                first, last = results
+                return f"{first} and {last}"
+            case _:
+                *items, last = results
+                return f"{', '.join(items)} and {last}"
