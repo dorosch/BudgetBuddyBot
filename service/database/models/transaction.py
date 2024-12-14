@@ -1,3 +1,4 @@
+import asyncio
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
@@ -16,6 +17,12 @@ ReportEntry: TypeAlias = dict[
 class Report:
     income: ReportEntry
     expenses: ReportEntry
+
+
+@dataclass
+class Analytics:
+    original_period: Report
+    compared_period: Report
 
 
 class Transaction(Document):
@@ -90,7 +97,7 @@ class Transaction(Document):
     description: Optional[str] = None
 
     @classmethod
-    async def get_income_and_expenses(
+    async def get_report(
         cls, tg_id: int, start_date: datetime, end_date: datetime
     ) -> Report:
         result = await cls.aggregate(
@@ -103,7 +110,9 @@ class Transaction(Document):
                 },
                 {
                     "$addFields": {
-                        "category": {"$ifNull": ["$category", str(cls.Category.UNKNOWN)]}
+                        "category": {
+                            "$ifNull": ["$category", str(cls.Category.UNKNOWN)]
+                        }
                     }
                 },
                 {
@@ -150,3 +159,34 @@ class Transaction(Document):
                     expenses[currency][category] += amount
 
         return Report(income=dict(income), expenses=dict(expenses))
+
+    @classmethod
+    async def get_analytics(
+        cls,
+        tg_id: int,
+        original: tuple[datetime, datetime],
+        compared: tuple[datetime, datetime],
+    ) -> Analytics:
+        original_period_start, original_period_end = original
+        compared_period_start, compared_period_end = compared
+
+        assert original_period_start < original_period_end
+        assert compared_period_start < compared_period_end
+        assert compared_period_end <= original_period_start
+
+        original_period, compared_period = await asyncio.gather(
+            cls.get_report(
+                tg_id=tg_id,
+                start_date=original_period_start,
+                end_date=original_period_end,
+            ),
+            cls.get_report(
+                tg_id=tg_id,
+                start_date=compared_period_start,
+                end_date=compared_period_end,
+            ),
+        )
+
+        return Analytics(
+            original_period=original_period, compared_period=compared_period
+        )

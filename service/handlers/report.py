@@ -123,9 +123,7 @@ class ReportCallbackHandler(CallbackQueryHandler):
 
             return await self.event.answer("Something get wrong")
 
-        report = await Transaction.get_income_and_expenses(
-            self.from_user.id, from_date, to_date
-        )
+        report = await Transaction.get_report(self.from_user.id, from_date, to_date)
 
         await self.bot.send_message(
             chat_id=self.event.message.chat.id,
