@@ -6,6 +6,8 @@ on:
 
 jobs:
   deploy:
+    # Disable until self-hosted server is ready
+    if: false
     runs-on: self-hosted
 
     steps:
